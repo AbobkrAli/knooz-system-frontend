@@ -41,6 +41,18 @@ const navItems = [
   { to: "/users", label: "المستخدمون", icon: Users },
 ]
 
+/** صفحات العامل فقط — ترتيب القائمة كما طُلب. نفس صلاحيات التعديل داخلها كالمشرف (واجهة + API). */
+const WORKER_NAV_PATHS_ORDERED = [
+  "/hasr-amtar",
+  "/current-work",
+  "/visits",
+  "/products",
+  "/invoices-history",
+  "/returns",
+] as const
+
+const WORKER_HOME = "/current-work"
+
 export function AppShell({
   user,
   token,
@@ -52,7 +64,11 @@ export function AppShell({
 }) {
   const [logoutOpen, setLogoutOpen] = useState(false)
   const visibleNavItems =
-    user.role === "admin" ? navItems : navItems.filter((item) => item.to !== "/users")
+    user.role === "admin"
+      ? navItems
+      : WORKER_NAV_PATHS_ORDERED.map((to) => navItems.find((item) => item.to === to)).filter(
+          (item): item is (typeof navItems)[number] => item !== undefined,
+        )
 
   return (
     <div className="dashboard-shell min-h-svh bg-background text-slate-800">
@@ -137,27 +153,62 @@ export function AppShell({
         <main className="dashboard-scrollbar content-appear flex-1 overflow-auto px-3 py-4 sm:px-4 sm:py-6 lg:px-8 lg:py-8">
           <div className="surface-card hover-lift p-3 sm:p-4 lg:p-6">
             <Routes>
-              <Route path="/dashboard" element={<DashboardPage token={token} />} />
-              <Route path="/guarantee-create" element={<GuaranteeCreatePage />} />
+              <Route
+                path="/dashboard"
+                element={
+                  user.role === "worker" ? (
+                    <Navigate to={WORKER_HOME} replace />
+                  ) : (
+                    <DashboardPage token={token} />
+                  )
+                }
+              />
+              <Route
+                path="/guarantee-create"
+                element={
+                  user.role === "worker" ? <Navigate to={WORKER_HOME} replace /> : <GuaranteeCreatePage />
+                }
+              />
               <Route path="/hasr-amtar" element={<HasrAmtarCreatePage />} />
               <Route
                 path="/current-work"
-                element={<VisitsPage token={token} user={user} variant="current-work" />}
+                element={<VisitsPage token={token} variant="current-work" />}
               />
               <Route
                 path="/visits"
-                element={<VisitsPage token={token} user={user} variant="all-visits" />}
+                element={<VisitsPage token={token} variant="all-visits" />}
               />
-              <Route path="/products" element={<ProductsPage token={token} user={user} />} />
-              <Route path="/work-groups" element={<WorkGroupsPage token={token} user={user} />} />
-              <Route path="/returns" element={<ReturnsPage token={token} user={user} />} />
+              <Route path="/products" element={<ProductsPage token={token} />} />
+              <Route
+                path="/work-groups"
+                element={
+                  user.role === "worker" ? (
+                    <Navigate to={WORKER_HOME} replace />
+                  ) : (
+                    <WorkGroupsPage token={token} user={user} />
+                  )
+                }
+              />
+              <Route path="/returns" element={<ReturnsPage token={token} />} />
               <Route path="/invoices-history" element={<InvoicesHistoryPage token={token} />} />
-              <Route path="/history" element={<HistoryPage token={token} />} />
+              <Route
+                path="/history"
+                element={user.role === "worker" ? <Navigate to={WORKER_HOME} replace /> : <HistoryPage token={token} />}
+              />
               <Route
                 path="/users"
-                element={user.role === "admin" ? <UsersPage token={token} /> : <Navigate to="/dashboard" replace />}
+                element={
+                  user.role === "admin" ? (
+                    <UsersPage token={token} />
+                  ) : (
+                    <Navigate to={WORKER_HOME} replace />
+                  )
+                }
               />
-              <Route path="*" element={<Navigate to="/dashboard" replace />} />
+              <Route
+                path="*"
+                element={<Navigate to={user.role === "admin" ? "/dashboard" : WORKER_HOME} replace />}
+              />
             </Routes>
           </div>
         </main>

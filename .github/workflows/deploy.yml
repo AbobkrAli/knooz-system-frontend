@@ -1,0 +1,45 @@
+# Deploys static build to the production VPS. Repository secrets (same as backend or separate):
+#   DEPLOY_HOST    — e.g. 155.133.23.168
+#   DEPLOY_USER    — e.g. root
+#   DEPLOY_SSH_KEY — private key with SSH access
+#
+# Server path: /opt/knooz/knooz-system-frontend
+
+name: Deploy frontend
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-frontend-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1.2.4
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script_stop: true
+          script: |
+            set -euo pipefail
+            APP_DIR=/opt/knooz/knooz-system-frontend
+            cd "$APP_DIR"
+            DEFAULT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+            git fetch origin "$DEFAULT_BRANCH"
+            git reset --hard "origin/${DEFAULT_BRANCH}"
+            npm ci
+            export VITE_API_BASE_URL=/api
+            npm run build
+            chmod -R o+rX apps/web/dist
+            nginx -t
+            systemctl reload nginx

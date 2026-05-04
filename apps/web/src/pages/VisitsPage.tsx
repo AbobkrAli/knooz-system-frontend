@@ -20,7 +20,6 @@ import {
   updateVisitWorkGroup,
 } from "@/lib/api"
 import type {
-  AuthUser,
   InventoryTransaction,
   InvoiceHistoryEntry,
   Product,
@@ -34,7 +33,7 @@ import {
   exportInvoiceReceiptPng,
   printInvoiceReceipt,
 } from "@/lib/invoice-receipt-export"
-import { err, localeAr, sellTypeAr, sellingTypeAr, visitStatusAr } from "@/lib/ui-ar"
+import { err, localeAr, sellTypeAr, sellingTypeAr } from "@/lib/ui-ar"
 import { PaginationBar } from "@/components/PaginationBar"
 import { cn } from "@workspace/ui/lib/utils"
 import { ChevronDown, ChevronRight, Eye, FileImage, FileText, Printer } from "lucide-react"
@@ -141,11 +140,9 @@ export type VisitsPageVariant = "current-work" | "all-visits"
 
 export function VisitsPage({
   token,
-  user,
   variant,
 }: {
   token: string
-  user: AuthUser
   variant: VisitsPageVariant
 }) {
   const isCurrentWork = variant === "current-work"
@@ -503,7 +500,7 @@ export function VisitsPage({
             aria-label={searchPlaceholder}
           />
         </div>
-        {!isCurrentWork && user.role === "admin" ? (
+        {!isCurrentWork ? (
           <div className="w-full min-w-0 sm:w-auto sm:max-w-xs">
             <p className="mb-1 text-xs text-muted-foreground">فلترة الحالة</p>
             <Select
@@ -550,7 +547,7 @@ export function VisitsPage({
           </div>
         ) : null}
       </div>
-      {!isCurrentWork && user.role === "admin" ? (
+      {!isCurrentWork ? (
         <PopoverForm
           title="إضافة زيارة"
           open={visitAddOpen}
@@ -737,35 +734,31 @@ export function VisitsPage({
                       {visit.address}
                     </TableCell>
                     <TableCell className="align-top">
-                      {user.role === "admin" ? (
-                        <Select
-                          value={visit.workGroupId ?? "__none__"}
-                          onValueChange={(v) => {
-                            if (v === "__none__") return
-                            void onUpdateWorkGroup(visit.id, v)
-                          }}
-                          disabled={workGroupUpdatingId === visit.id}
+                      <Select
+                        value={visit.workGroupId ?? "__none__"}
+                        onValueChange={(v) => {
+                          if (v === "__none__") return
+                          void onUpdateWorkGroup(visit.id, v)
+                        }}
+                        disabled={workGroupUpdatingId === visit.id}
+                      >
+                        <SelectTrigger
+                          id={`visit-work-group-${visit.id}`}
+                          className="mx-auto w-full min-w-0 max-w-56 sm:min-w-36"
                         >
-                          <SelectTrigger
-                            id={`visit-work-group-${visit.id}`}
-                            className="mx-auto w-full min-w-0 max-w-56 sm:min-w-36"
-                          >
-                            <SelectValue placeholder="بدون مجموعة" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="__none__" disabled>
-                              بدون مجموعة
+                          <SelectValue placeholder="بدون مجموعة" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__none__" disabled>
+                            بدون مجموعة
+                          </SelectItem>
+                          {workGroups.map((group) => (
+                            <SelectItem key={group.id} value={group.id}>
+                              {group.name}
                             </SelectItem>
-                            {workGroups.map((group) => (
-                              <SelectItem key={group.id} value={group.id}>
-                                {group.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      ) : (
-                        visit.workGroup?.name ?? "بدون مجموعة"
-                      )}
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </TableCell>
                     <TableCell className="text-xs tabular-nums text-muted-foreground sm:text-sm">
                       {new Date(visit.visitDate).toLocaleString(localeAr)}
@@ -1340,16 +1333,12 @@ export function VisitsPage({
                   </TableCell>
                   <TableCell className="max-w-[14rem] text-muted-foreground">{visit.address}</TableCell>
                   <TableCell>
-                    {user.role === "admin" ? (
-                      <VisitStatusSelect
-                        id={`visit-status-all-${visit.id}`}
-                        value={visit.status}
-                        disabled={statusUpdatingId === visit.id}
-                        onChange={(s) => void onUpdateStatus(visit.id, s)}
-                      />
-                    ) : (
-                      visitStatusAr(visit.status)
-                    )}
+                    <VisitStatusSelect
+                      id={`visit-status-all-${visit.id}`}
+                      value={visit.status}
+                      disabled={statusUpdatingId === visit.id}
+                      onChange={(s) => void onUpdateStatus(visit.id, s)}
+                    />
                   </TableCell>
                   <TableCell className="tabular-nums text-muted-foreground">
                     {new Date(visit.visitDate).toLocaleString(localeAr)}

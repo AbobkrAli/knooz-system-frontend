@@ -8,7 +8,7 @@ import {
   popoverFormControlClass,
 } from "@/components/PopoverForm"
 import { createOutsideInvoice, createProduct, getProducts, updateProduct } from "@/lib/api"
-import type { AuthUser, Product } from "@/lib/api"
+import type { Product } from "@/lib/api"
 import { formatMoneyAr, invoiceDraftTotals } from "@/lib/invoice-ui"
 import { err, localeAr } from "@/lib/ui-ar"
 import {
@@ -24,7 +24,7 @@ import { Pencil } from "lucide-react"
 import type { FormEvent } from "react"
 import { useEffect, useMemo, useState } from "react"
 
-export function ProductsPage({ token, user }: { token: string; user: AuthUser }) {
+export function ProductsPage({ token }: { token: string }) {
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
@@ -240,8 +240,7 @@ export function ProductsPage({ token, user }: { token: string; user: AuthUser })
         value={search}
         onChange={(e) => setSearch(e.target.value)}
       />
-      {user.role === "admin" ? (
-        <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2">
           <PopoverForm
             title="إضافة منتج"
             open={addOpen}
@@ -531,7 +530,6 @@ export function ProductsPage({ token, user }: { token: string; user: AuthUser })
             }
           />
         </div>
-      ) : null}
       {loading ? <p className="text-sm text-muted-foreground">جاري تحميل المنتجات…</p> : null}
       <div className="rounded-lg border border-border bg-card">
         <Table>
@@ -542,13 +540,13 @@ export function ProductsPage({ token, user }: { token: string; user: AuthUser })
               <TableHead>الشراء</TableHead>
               <TableHead>البيع (داخل)</TableHead>
               <TableHead>البيع (خارج)</TableHead>
-              {user.role === "admin" ? <TableHead>تعديل</TableHead> : null}
+              <TableHead>تعديل</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredProducts.length === 0 ? (
               <TableRow className="hover:bg-transparent">
-                <TableCell colSpan={user.role === "admin" ? 6 : 5} className="h-24 text-center text-muted-foreground">
+                <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
                   لا توجد منتجات مطابقة للبحث.
                 </TableCell>
               </TableRow>
@@ -568,8 +566,7 @@ export function ProductsPage({ token, user }: { token: string; user: AuthUser })
                   <TableCell className="tabular-nums" dir="ltr">
                     {product.sellPriceOutside}
                   </TableCell>
-                  {user.role === "admin" ? (
-                    <TableCell>
+                  <TableCell>
                       <PopoverForm
                         title={`تعديل ${product.name}`}
                         open={editOpenByProduct[product.id] ?? false}
@@ -752,8 +749,7 @@ export function ProductsPage({ token, user }: { token: string; user: AuthUser })
                           />
                         }
                       />
-                    </TableCell>
-                  ) : null}
+                  </TableCell>
                 </TableRow>
               ))
             )}

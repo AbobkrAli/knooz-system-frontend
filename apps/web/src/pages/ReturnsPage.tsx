@@ -8,7 +8,7 @@ import {
   popoverFormControlClass,
 } from "@/components/PopoverForm"
 import { createReturn, getProducts, getReturns } from "@/lib/api"
-import type { AuthUser, Product, ReturnEntry } from "@/lib/api"
+import type { Product, ReturnEntry } from "@/lib/api"
 import { formatMoneyAr, invoiceDraftTotals } from "@/lib/invoice-ui"
 import { err, localeAr } from "@/lib/ui-ar"
 import { PaginationBar } from "@/components/PaginationBar"
@@ -33,7 +33,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 const RETURNS_PAGE_SIZE = 20
 
-export function ReturnsPage({ token, user }: { token: string; user: AuthUser }) {
+export function ReturnsPage({ token }: { token: string }) {
   type ReturnLineDraft = { productId: string; quantity: string }
   const [items, setItems] = useState<ReturnEntry[]>([])
   const [returnsPage, setReturnsPage] = useState(1)
@@ -204,8 +204,7 @@ export function ReturnsPage({ token, user }: { token: string; user: AuthUser }) 
         value={searchInput}
         onChange={(e) => setSearchInput(e.target.value)}
       />
-      {user.role === "admin" ? (
-        <PopoverForm
+      <PopoverForm
           title="إضافة مرتجع"
           open={addOpen}
           setOpen={setAddOpen}
@@ -398,7 +397,6 @@ export function ReturnsPage({ token, user }: { token: string; user: AuthUser }) 
             <PopoverFormSuccess title="تم تسجيل المرتجع" description="حُدّث المخزون وفقًا للمرتجع." />
           }
         />
-      ) : null}
       {loading ? <p className="text-sm text-muted-foreground">جاري تحميل المرتجعات…</p> : null}
       <div className="rounded-lg border border-border bg-card">
         <Table>

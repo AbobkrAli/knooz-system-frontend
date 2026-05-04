@@ -54,7 +54,7 @@ export function App() {
               جاري التحقق من الجلسة…
             </div>
           ) : authReady && token && user ? (
-            <Navigate to="/dashboard" replace />
+            <Navigate to={user.role === "admin" ? "/dashboard" : "/current-work"} replace />
           ) : (
             <LoginPage
               onLogin={({ token: nextToken, user: nextUser }) => {
