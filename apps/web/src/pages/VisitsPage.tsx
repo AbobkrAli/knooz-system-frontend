@@ -11,6 +11,7 @@ import {
   createInventoryTransaction,
   createSellingTransaction,
   createVisit,
+  createWorkGroup,
   getInventoryTransactions,
   getProducts,
   getSellingTransactions,
@@ -35,6 +36,7 @@ import {
 } from "@/lib/invoice-receipt-export"
 import { err, localeAr, sellTypeAr, sellingTypeAr } from "@/lib/ui-ar"
 import { PaginationBar } from "@/components/PaginationBar"
+import { Button } from "@workspace/ui/components/button"
 import { cn } from "@workspace/ui/lib/utils"
 import { ChevronDown, ChevronRight, Eye, FileImage, FileText, Printer } from "lucide-react"
 import {
@@ -191,6 +193,8 @@ export function VisitsPage({
   const [workGroupUpdatingId, setWorkGroupUpdatingId] = useState<string | null>(null)
   const [statusFilter, setStatusFilter] = useState<"all" | VisitStatus>("pending")
   const [currentWorkGroupFilter, setCurrentWorkGroupFilter] = useState<string>("all")
+  const [newWorkGroupName, setNewWorkGroupName] = useState("")
+  const [workGroupAddBusy, setWorkGroupAddBusy] = useState(false)
 
   const loadVisits = useCallback(() => {
     setLoading(true)
@@ -299,9 +303,30 @@ export function VisitsPage({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visits, isCurrentWork])
 
+  const onQuickCreateWorkGroup = async () => {
+    const name = newWorkGroupName.trim()
+    if (!name) return
+    setError("")
+    setWorkGroupAddBusy(true)
+    try {
+      const created = await createWorkGroup(token, { name })
+      setNewWorkGroupName("")
+      setWorkGroups((prev) => [...prev, created])
+      setWorkGroupId(created.id)
+    } catch {
+      setError(err.create)
+    } finally {
+      setWorkGroupAddBusy(false)
+    }
+  }
+
   const onCreate = async (event: FormEvent) => {
     event.preventDefault()
     setError("")
+    if (!workGroupId) {
+      setError("اختر مجموعة عمل أو أنشئ مجموعة جديدة.")
+      return
+    }
     try {
       setVisitAddState("loading")
       await createVisit(token, {
@@ -553,7 +578,7 @@ export function VisitsPage({
           open={visitAddOpen}
           setOpen={setVisitAddOpen}
           width="560px"
-          height="280px"
+          height="340px"
           showCloseButton={visitAddState !== "success"}
           showSuccess={visitAddState === "success"}
           openChild={
@@ -561,7 +586,11 @@ export function VisitsPage({
               <PopoverFormBody
                 footer={
                   <div className="flex justify-end">
-                    <PopoverFormButton loading={visitAddState === "loading"} text="إنشاء زيارة" />
+                    <PopoverFormButton
+                      loading={visitAddState === "loading"}
+                      text="إنشاء زيارة"
+                      disabled={!workGroupId}
+                    />
                   </div>
                 }
               >
@@ -620,9 +649,16 @@ export function VisitsPage({
                     </Select>
                   </PopoverFormField>
                   <PopoverFormField label="مجموعة العمل" htmlFor="add-visit-work-group-all">
-                    <Select value={workGroupId} onValueChange={setWorkGroupId}>
+                    <Select
+                      value={
+                        workGroupId && workGroups.some((g) => g.id === workGroupId)
+                          ? workGroupId
+                          : undefined
+                      }
+                      onValueChange={setWorkGroupId}
+                    >
                       <SelectTrigger id="add-visit-work-group-all" className="w-full">
-                        <SelectValue />
+                        <SelectValue placeholder={workGroups.length ? "اختر مجموعة" : "لا توجد مجموعات بعد"} />
                       </SelectTrigger>
                       <SelectContent>
                         {workGroups.map((group) => (
@@ -632,6 +668,26 @@ export function VisitsPage({
                         ))}
                       </SelectContent>
                     </Select>
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                      <input
+                        id="add-visit-new-work-group"
+                        className={popoverFormControlClass}
+                        placeholder="اسم مجموعة عمل جديدة"
+                        value={newWorkGroupName}
+                        onChange={(e) => setNewWorkGroupName(e.target.value)}
+                        dir="rtl"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="shrink-0"
+                        disabled={workGroupAddBusy || !newWorkGroupName.trim()}
+                        onClick={() => void onQuickCreateWorkGroup()}
+                      >
+                        {workGroupAddBusy ? "جاري الإضافة…" : "إضافة مجموعة"}
+                      </Button>
+                    </div>
                   </PopoverFormField>
                 </div>
               </PopoverFormBody>

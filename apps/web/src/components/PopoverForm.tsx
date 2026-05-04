@@ -194,10 +194,12 @@ export function PopoverFormButton({
   loading,
   text = "إرسال",
   variant = "primary",
+  disabled = false,
 }: {
   loading: boolean
   text: string
   variant?: "primary" | "success" | "warning" | "danger" | "info" | "violet"
+  disabled?: boolean
 }) {
   const buttonVariantClass = {
     primary: "bg-blue-600 text-white hover:bg-blue-700",
@@ -211,9 +213,11 @@ export function PopoverFormButton({
   return (
     <button
       type="submit"
+      disabled={disabled || loading}
       className={cn(
         "ms-auto flex h-9 min-w-26 shrink-0 items-center justify-center overflow-hidden rounded-md px-3 text-xs font-semibold shadow-sm max-sm:ms-0 max-sm:min-h-10 max-sm:w-full max-sm:min-w-0",
-        buttonVariantClass
+        buttonVariantClass,
+        (disabled || loading) && "opacity-60",
       )}
     >
       <span className="flex w-full items-center justify-center motion-safe:transition-opacity motion-safe:duration-150">
