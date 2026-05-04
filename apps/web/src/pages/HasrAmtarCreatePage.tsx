@@ -265,7 +265,7 @@ export function HasrAmtarCreatePage() {
             <span className="max-md:hidden">
               حصر امتار — عبّئ الجداول ثم نزّل صورة أو PDF أو اطبع. يبدأ بصف واحد؛ استخدم «إضافة صف» لباقي
               الأماكن.
-            </span>
+            </span> //s
             <span className="md:hidden">عبّئ الجداول في المعاينة، ثم صورة أو PDF أو طباعة من الشريط أسفل الشاشة.</span>
           </p>
         </div>
