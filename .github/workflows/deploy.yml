@@ -29,8 +29,9 @@ jobs:
             echo "::error::Set repository secrets DEPLOY_HOST, DEPLOY_USER, and DEPLOY_SSH_KEY."
             exit 1
           fi
-          if ! printf '%s' "$DEPLOY_SSH_KEY" | grep -q "BEGIN.*PRIVATE KEY"; then
-            echo "::error::DEPLOY_SSH_KEY does not look like a private key (missing BEGIN … PRIVATE KEY). Paste the private key, not the .pub file."
+          FIRST=$(printf '%s' "$DEPLOY_SSH_KEY" | tr -d '\r' | sed '/./!d' | head -n1)
+          if printf '%s' "$FIRST" | grep -qE '^(ssh-rsa|ssh-ed25519|ssh-dss|ecdsa-sha2)'; then
+            echo "::error::DEPLOY_SSH_KEY looks like a public key (starts with ssh-…). Paste the private key file (e.g. github_actions_knooz), not the .pub file."
             exit 1
           fi
 
