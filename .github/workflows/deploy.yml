@@ -1,9 +1,5 @@
-# Deploys static build to the production VPS. Repository secrets (same as backend or separate):
-#   DEPLOY_HOST    — e.g. 155.133.23.168
-#   DEPLOY_USER    — e.g. root
-#   DEPLOY_SSH_KEY — private key with SSH access
-#
-# Server path: /opt/knooz/knooz-system-frontend
+# Repository secrets: DEPLOY_HOST, DEPLOY_USER, DEPLOY_SSH_KEY (same as backend).
+# Private key must be multiline OpenSSH format; do not use the .pub file.
 
 name: Deploy frontend
 
@@ -30,26 +26,42 @@ jobs:
           DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
         run: |
           if [ -z "$DEPLOY_HOST" ] || [ -z "$DEPLOY_USER" ] || [ -z "$DEPLOY_SSH_KEY" ]; then
-            echo "::error::Set repository secrets DEPLOY_HOST, DEPLOY_USER, and DEPLOY_SSH_KEY (Settings → Secrets and variables → Actions)."
+            echo "::error::Set repository secrets DEPLOY_HOST, DEPLOY_USER, and DEPLOY_SSH_KEY."
+            exit 1
+          fi
+          if ! printf '%s' "$DEPLOY_SSH_KEY" | grep -q "BEGIN.*PRIVATE KEY"; then
+            echo "::error::DEPLOY_SSH_KEY does not look like a private key (missing BEGIN … PRIVATE KEY). Paste the private key, not the .pub file."
             exit 1
           fi
 
-      - name: Deploy over SSH
-        uses: appleboy/ssh-action@v1.2.4
+      - uses: webfactory/ssh-agent@v0.9.0
         with:
-          host: ${{ secrets.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_USER }}
-          key: ${{ secrets.DEPLOY_SSH_KEY }}
-          script: |
-            set -euo pipefail
-            APP_DIR=/opt/knooz/knooz-system-frontend
-            cd "$APP_DIR"
-            DEFAULT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-            git fetch origin "$DEFAULT_BRANCH"
-            git reset --hard "origin/${DEFAULT_BRANCH}"
-            npm ci
-            export VITE_API_BASE_URL=/api
-            npm run build
-            chmod -R o+rX apps/web/dist
-            nginx -t
-            systemctl reload nginx
+          ssh-private-key: ${{ secrets.DEPLOY_SSH_KEY }}
+
+      - name: Add server to known_hosts
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
+
+      - name: Deploy over SSH
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          ssh -o BatchMode=yes "${DEPLOY_USER}@${DEPLOY_HOST}" bash -s << 'ENDSSH'
+          set -euo pipefail
+          APP_DIR=/opt/knooz/knooz-system-frontend
+          cd "$APP_DIR"
+          DEFAULT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+          git fetch origin "$DEFAULT_BRANCH"
+          git reset --hard "origin/${DEFAULT_BRANCH}"
+          npm ci
+          export VITE_API_BASE_URL=/api
+          npm run build
+          chmod -R o+rX apps/web/dist
+          nginx -t
+          systemctl reload nginx
+          ENDSSH
