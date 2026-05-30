@@ -1,29 +1,27 @@
-import { Navigate, Route, Routes } from "react-router-dom"
 import { useEffect, useState } from "react"
-import { getMe } from "@/lib/api"
-import type { AuthUser } from "@/lib/api"
+import { Navigate, Route, Routes } from "react-router-dom"
+
 import { AppShell } from "@/components/AppShell"
+import type { AuthUser } from "@/lib/api"
+import { getMe } from "@/lib/api"
 import { LoginPage } from "@/pages/LoginPage"
+import { FaqPage, FreeSurveyPage, LandingPage, PrivacyPage, ServiceDetailPage, SitemapPage } from "@/pages/LandingPage"
+import { allServices } from "@/pages/epoxySiteData"
 
 const AUTH_STORAGE_KEY = "authToken"
 
 export function App() {
-  const [token, setToken] = useState<string | null>(
-    () => localStorage.getItem(AUTH_STORAGE_KEY) ?? null
-  )
+  const [token, setToken] = useState<string | null>(() => localStorage.getItem(AUTH_STORAGE_KEY) ?? null)
   const [user, setUser] = useState<AuthUser | null>(null)
-  /**
-   * If there is a stored token on first paint, we must not redirect to login until
-   * `getMe` resolves — otherwise `user` is still null and the session looks logged out.
-   * No stored token → ready immediately (show login).
-   */
   const [authReady, setAuthReady] = useState(() => localStorage.getItem(AUTH_STORAGE_KEY) == null)
 
   useEffect(() => {
     if (!token) {
       return
     }
+
     let cancelled = false
+
     getMe(token)
       .then((me) => {
         if (!cancelled) {
@@ -39,13 +37,36 @@ export function App() {
           setAuthReady(true)
         }
       })
+
     return () => {
       cancelled = true
     }
   }, [token])
 
+  const publicRoutes = [
+    { path: "/faq", element: <FaqPage /> },
+    { path: "/privacy", element: <PrivacyPage /> },
+    { path: "/sitemap", element: <SitemapPage /> },
+    { path: "/free-survey", element: <FreeSurveyPage /> },
+  ]
+
   return (
     <Routes>
+      <Route
+        path="/"
+        element={
+          !authReady && token ? (
+            <div className="flex min-h-svh items-center justify-center bg-background text-muted-foreground">
+              جاري التحقق من الجلسة…
+            </div>
+          ) : authReady && token && user ? (
+            <Navigate to={user.role === "admin" ? "/dashboard" : "/current-work"} replace />
+          ) : (
+            <LandingPage />
+          )
+        }
+      />
+
       <Route
         path="/login"
         element={
@@ -66,6 +87,15 @@ export function App() {
           )
         }
       />
+
+      {publicRoutes.map((route) => (
+        <Route key={route.path} path={route.path} element={route.element} />
+      ))}
+
+      {allServices.map((service) => (
+        <Route key={service.path} path={service.path} element={<ServiceDetailPage service={service} />} />
+      ))}
+
       <Route
         path="/*"
         element={

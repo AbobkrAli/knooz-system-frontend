@@ -34,7 +34,8 @@ const inputStyle: CSSProperties = {
 }
 
 type Props = {
-  surveyRows: MetersSurveyMeasureRow[]
+  surveyRows1: MetersSurveyMeasureRow[]
+  surveyRows2: MetersSurveyMeasureRow[]
   prices: Record<MetersSurveyPriceKey, string>
   magnetMeters: string
   clientName: string
@@ -43,9 +44,12 @@ type Props = {
   /** When set (e.g. data URL from fetch), logos render in html2canvas/print; otherwise default URL (fine in browser only). */
   logoSrcOverride?: string
   readOnly?: boolean
-  onSurveyCellChange?: (id: string, key: keyof Omit<MetersSurveyMeasureRow, "id">, value: string) => void
-  onAddSurveyRow?: () => void
-  onRemoveSurveyRow?: (id: string) => void
+  onSurveyCellChange1?: (id: string, key: keyof Omit<MetersSurveyMeasureRow, "id">, value: string) => void
+  onAddSurveyRow1?: () => void
+  onRemoveSurveyRow1?: (id: string) => void
+  onSurveyCellChange2?: (id: string, key: keyof Omit<MetersSurveyMeasureRow, "id">, value: string) => void
+  onAddSurveyRow2?: () => void
+  onRemoveSurveyRow2?: (id: string) => void
   onPriceChange?: (k: MetersSurveyPriceKey, v: string) => void
   onMagnetMeters?: (v: string) => void
   onPaid?: (v: string) => void
@@ -53,7 +57,8 @@ type Props = {
 
 export const MetersSurveySheet = forwardRef<HTMLDivElement, Props>(function MetersSurveySheet(
   {
-    surveyRows,
+    surveyRows1,
+    surveyRows2,
     prices,
     magnetMeters,
     clientName,
@@ -61,9 +66,12 @@ export const MetersSurveySheet = forwardRef<HTMLDivElement, Props>(function Mete
     paid,
     logoSrcOverride,
     readOnly,
-    onSurveyCellChange,
-    onAddSurveyRow,
-    onRemoveSurveyRow,
+    onSurveyCellChange1,
+    onAddSurveyRow1,
+    onRemoveSurveyRow1,
+    onSurveyCellChange2,
+    onAddSurveyRow2,
+    onRemoveSurveyRow2,
     onPriceChange,
     onMagnetMeters,
     onPaid,
@@ -71,7 +79,7 @@ export const MetersSurveySheet = forwardRef<HTMLDivElement, Props>(function Mete
   ref,
 ) {
   const logoSrc = logoSrcOverride?.trim() ? logoSrcOverride : logoSrcDefault()
-  const totals = surveyColumnTotals(surveyRows)
+  const totals = surveyColumnTotals(surveyRows1, surveyRows2)
   const metersFor = (k: MetersSurveyPriceKey): number => {
     if (k === "white_linear") return totals.linear
     if (k === "white_square") return totals.square
@@ -167,22 +175,22 @@ export const MetersSurveySheet = forwardRef<HTMLDivElement, Props>(function Mete
             {th("المكان")}
             {th("المساحات")}
             {th("المساحات")}
-            {th("مربع")}
             {th("طولي")}
             {th("شادو لايت")}
-            {th("معالج")}
-            <th
-              style={{
-                border: `1px solid ${border}`,
-                width: 36,
-                backgroundColor: headerBg,
-              }}
-            />
+            {!readOnly && (
+              <th
+                className="print-hide"
+                style={{
+                  border: `1px solid ${border}`,
+                  width: 36,
+                  backgroundColor: headerBg,
+                }}
+              />
+            )}
           </tr>
         </thead>
         <tbody>
-          {surveyRows.map((row) => {
-            const proc = computedProcessedCell(row.dimA, row.dimB)
+          {surveyRows1.map((row) => {
             return (
               <tr key={row.id}>
                 {td(
@@ -191,7 +199,7 @@ export const MetersSurveySheet = forwardRef<HTMLDivElement, Props>(function Mete
                     disabled={readOnly}
                     style={{ ...inputStyle, textAlign: "right" }}
                     value={row.place}
-                    onChange={(e) => onSurveyCellChange?.(row.id, "place", e.target.value)}
+                    onChange={(e) => onSurveyCellChange1?.(row.id, "place", e.target.value)}
                   />,
                   { textAlign: "right" },
                 )}
@@ -201,7 +209,7 @@ export const MetersSurveySheet = forwardRef<HTMLDivElement, Props>(function Mete
                     disabled={readOnly}
                     style={inputStyle}
                     value={row.dimA}
-                    onChange={(e) => onSurveyCellChange?.(row.id, "dimA", e.target.value)}
+                    onChange={(e) => onSurveyCellChange1?.(row.id, "dimA", e.target.value)}
                     dir="ltr"
                   />,
                 )}
@@ -211,17 +219,7 @@ export const MetersSurveySheet = forwardRef<HTMLDivElement, Props>(function Mete
                     disabled={readOnly}
                     style={inputStyle}
                     value={row.dimB}
-                    onChange={(e) => onSurveyCellChange?.(row.id, "dimB", e.target.value)}
-                    dir="ltr"
-                  />,
-                )}
-                {td(
-                  <input
-                    readOnly={readOnly}
-                    disabled={readOnly}
-                    style={inputStyle}
-                    value={row.square}
-                    onChange={(e) => onSurveyCellChange?.(row.id, "square", e.target.value)}
+                    onChange={(e) => onSurveyCellChange1?.(row.id, "dimB", e.target.value)}
                     dir="ltr"
                   />,
                 )}
@@ -231,7 +229,7 @@ export const MetersSurveySheet = forwardRef<HTMLDivElement, Props>(function Mete
                     disabled={readOnly}
                     style={inputStyle}
                     value={row.linear}
-                    onChange={(e) => onSurveyCellChange?.(row.id, "linear", e.target.value)}
+                    onChange={(e) => onSurveyCellChange1?.(row.id, "linear", e.target.value)}
                     dir="ltr"
                   />,
                 )}
@@ -241,19 +239,15 @@ export const MetersSurveySheet = forwardRef<HTMLDivElement, Props>(function Mete
                     disabled={readOnly}
                     style={inputStyle}
                     value={row.shadowLight}
-                    onChange={(e) => onSurveyCellChange?.(row.id, "shadowLight", e.target.value)}
+                    onChange={(e) => onSurveyCellChange1?.(row.id, "shadowLight", e.target.value)}
                     dir="ltr"
                   />,
                 )}
-                {td(
-                  <span style={{ display: "block", textAlign: "center", fontWeight: 600 }} dir="ltr">
-                    {proc}
-                  </span>,
-                )}
-                {td(
-                  surveyRows.length > 1 && !readOnly ? (
+                {!readOnly && td(
+                  surveyRows1.length > 1 ? (
                     <button
                       type="button"
+                      className="print-hide"
                       style={{
                         border: "none",
                         background: "transparent",
@@ -263,7 +257,144 @@ export const MetersSurveySheet = forwardRef<HTMLDivElement, Props>(function Mete
                         padding: 0,
                         width: "100%",
                       }}
-                      onClick={() => onRemoveSurveyRow?.(row.id)}
+                      onClick={() => onRemoveSurveyRow1?.(row.id)}
+                      aria-label="حذف الصف"
+                    >
+                      ×
+                    </button>
+                  ) : (
+                    <span />
+                  ),
+                  { textAlign: "center", width: 36, padding: "0" },
+                )}
+              </tr>
+            )
+          })}
+          <tr style={{ backgroundColor: "#f1f5f9" }}>
+            <td
+              colSpan={3}
+              style={{
+                border: `1px solid ${border}`,
+                padding: cellPad,
+                fontWeight: 800,
+                fontSize: "11px",
+                textAlign: "center",
+              }}
+            >
+              المجموع
+            </td>
+            <td style={{ border: `1px solid ${border}`, padding: cellPad, textAlign: "center", fontWeight: 700 }} dir="ltr">
+              {formatSurveyNumber(totals.linear)}
+            </td>
+            <td style={{ border: `1px solid ${border}`, padding: cellPad, textAlign: "center", fontWeight: 700 }} dir="ltr">
+              {formatSurveyNumber(totals.shadowLight)}
+            </td>
+            {!readOnly && <td className="print-hide" style={{ border: `1px solid ${border}`, padding: cellPad }} />}
+          </tr>
+        </tbody>
+      </table>
+
+      {!readOnly && (
+        <div className="print-hide" style={{ marginBottom: "24px", textAlign: "start" }}>
+          <button
+            type="button"
+            onClick={() => onAddSurveyRow1?.()}
+            style={{
+              fontSize: "11px",
+              padding: "4px 10px",
+              borderRadius: "6px",
+              border: `1px solid ${border}`,
+              background: "#f8fafc",
+              cursor: "pointer",
+            }}
+          >
+            إضافة صف
+          </button>
+        </div>
+      )}
+
+      {/* Table 2 - المعالج */}
+      <table
+        style={{
+          width: "100%",
+          borderCollapse: "collapse",
+          tableLayout: "fixed",
+          marginBottom: "12px",
+        }}
+      >
+        <thead>
+          <tr>
+            {th("المكان")}
+            {th("المساحات")}
+            {th("المساحات")}
+            {th("المعالج")}
+            {!readOnly && (
+              <th
+                className="print-hide"
+                style={{
+                  border: `1px solid ${border}`,
+                  width: 36,
+                  backgroundColor: headerBg,
+                }}
+              />
+            )}
+          </tr>
+        </thead>
+        <tbody>
+          {surveyRows2.map((row) => {
+            const proc = computedProcessedCell(row.dimA, row.dimB)
+            return (
+              <tr key={row.id}>
+                {td(
+                  <input
+                    readOnly={readOnly}
+                    disabled={readOnly}
+                    style={{ ...inputStyle, textAlign: "right" }}
+                    value={row.place}
+                    onChange={(e) => onSurveyCellChange2?.(row.id, "place", e.target.value)}
+                  />,
+                  { textAlign: "right" },
+                )}
+                {td(
+                  <input
+                    readOnly={readOnly}
+                    disabled={readOnly}
+                    style={inputStyle}
+                    value={row.dimA}
+                    onChange={(e) => onSurveyCellChange2?.(row.id, "dimA", e.target.value)}
+                    dir="ltr"
+                  />,
+                )}
+                {td(
+                  <input
+                    readOnly={readOnly}
+                    disabled={readOnly}
+                    style={inputStyle}
+                    value={row.dimB}
+                    onChange={(e) => onSurveyCellChange2?.(row.id, "dimB", e.target.value)}
+                    dir="ltr"
+                  />,
+                )}
+                {td(
+                  <span style={{ display: "block", textAlign: "center", fontWeight: 600 }} dir="ltr">
+                    {proc}
+                  </span>,
+                )}
+                {!readOnly && td(
+                  surveyRows2.length > 1 ? (
+                    <button
+                      type="button"
+                      className="print-hide"
+                      style={{
+                        border: "none",
+                        background: "transparent",
+                        color: "#b91c1c",
+                        cursor: "pointer",
+                        fontSize: "12px",
+                        padding: 0,
+                        width: "100%",
+                      }}
+                      onClick={() => onRemoveSurveyRow2?.(row.id)}
                       aria-label="حذف الصف"
                     >
                       ×
@@ -290,27 +421,18 @@ export const MetersSurveySheet = forwardRef<HTMLDivElement, Props>(function Mete
               المجموع
             </td>
             <td style={{ border: `1px solid ${border}`, padding: cellPad, textAlign: "center", fontWeight: 700 }} dir="ltr">
-              {formatSurveyNumber(totals.square)}
-            </td>
-            <td style={{ border: `1px solid ${border}`, padding: cellPad, textAlign: "center", fontWeight: 700 }} dir="ltr">
-              {formatSurveyNumber(totals.linear)}
-            </td>
-            <td style={{ border: `1px solid ${border}`, padding: cellPad, textAlign: "center", fontWeight: 700 }} dir="ltr">
-              {formatSurveyNumber(totals.shadowLight)}
-            </td>
-            <td style={{ border: `1px solid ${border}`, padding: cellPad, textAlign: "center", fontWeight: 700 }} dir="ltr">
               {formatSurveyNumber(totals.processed)}
             </td>
-            <td style={{ border: `1px solid ${border}`, padding: cellPad }} />
+            {!readOnly && <td className="print-hide" style={{ border: `1px solid ${border}`, padding: cellPad }} />}
           </tr>
         </tbody>
       </table>
 
-      {!readOnly ? (
-        <div style={{ marginBottom: "12px", textAlign: "start" }}>
+      {!readOnly && (
+        <div className="print-hide" style={{ marginBottom: "24px", textAlign: "start" }}>
           <button
             type="button"
-            onClick={() => onAddSurveyRow?.()}
+            onClick={() => onAddSurveyRow2?.()}
             style={{
               fontSize: "11px",
               padding: "4px 10px",
@@ -323,9 +445,9 @@ export const MetersSurveySheet = forwardRef<HTMLDivElement, Props>(function Mete
             إضافة صف
           </button>
         </div>
-      ) : null}
+      )}
 
-      {/* Table 2 */}
+      {/* Table 3 (Prices) */}
       <table style={{ width: "72%", marginInlineStart: "auto", borderCollapse: "collapse", marginBottom: "12px" }}>
         <thead>
           <tr>

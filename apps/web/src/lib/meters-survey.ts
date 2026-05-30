@@ -81,12 +81,12 @@ export function sumProcessedColumn(rows: MetersSurveyMeasureRow[]): number {
   return s
 }
 
-export function surveyColumnTotals(rows: MetersSurveyMeasureRow[]) {
+export function surveyColumnTotals(rows1: MetersSurveyMeasureRow[], rows2: MetersSurveyMeasureRow[]) {
   return {
-    square: sumNumericStrings(rows, (r) => r.square),
-    linear: sumNumericStrings(rows, (r) => r.linear),
-    shadowLight: sumNumericStrings(rows, (r) => r.shadowLight),
-    processed: sumProcessedColumn(rows),
+    square: sumNumericStrings(rows1, (r) => r.square),
+    linear: sumNumericStrings(rows1, (r) => r.linear),
+    shadowLight: sumNumericStrings(rows1, (r) => r.shadowLight),
+    processed: sumProcessedColumn(rows2),
   }
 }
 

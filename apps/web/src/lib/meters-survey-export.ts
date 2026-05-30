@@ -5,7 +5,8 @@ import { createElement } from "react"
 import { renderToStaticMarkup } from "react-dom/server"
 
 export type MetersSurveySnapshot = {
-  surveyRows: MetersSurveyMeasureRow[]
+  surveyRows1: MetersSurveyMeasureRow[]
+  surveyRows2: MetersSurveyMeasureRow[]
   prices: Record<MetersSurveyPriceKey, string>
   magnetMeters: string
   clientName: string

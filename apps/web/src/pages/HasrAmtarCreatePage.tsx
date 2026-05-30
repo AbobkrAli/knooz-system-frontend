@@ -38,7 +38,8 @@ async function waitForImagesInNode(root: HTMLElement): Promise<void> {
 }
 
 export function HasrAmtarCreatePage() {
-  const [surveyRows, setSurveyRows] = useState<MetersSurveyMeasureRow[]>(() => [newSurveyRow()])
+  const [surveyRows1, setSurveyRows1] = useState<MetersSurveyMeasureRow[]>(() => [newSurveyRow()])
+  const [surveyRows2, setSurveyRows2] = useState<MetersSurveyMeasureRow[]>(() => [newSurveyRow()])
   const [prices, setPrices] = useState(emptyPriceRow)
   const [magnetMeters, setMagnetMeters] = useState("")
   const [clientName, setClientName] = useState("")
@@ -54,7 +55,8 @@ export function HasrAmtarCreatePage() {
 
   const snapshot = useMemo(
     () => ({
-      surveyRows,
+      surveyRows1,
+      surveyRows2,
       prices,
       magnetMeters,
       clientName,
@@ -62,7 +64,7 @@ export function HasrAmtarCreatePage() {
       paid,
       logoDataUrl: logoDataUrl ?? undefined,
     }),
-    [surveyRows, prices, magnetMeters, clientName, clientLocation, paid, logoDataUrl],
+    [surveyRows1, surveyRows2, prices, magnetMeters, clientName, clientLocation, paid, logoDataUrl],
   )
 
   useEffect(() => {
@@ -109,19 +111,34 @@ export function HasrAmtarCreatePage() {
     }
   }, [snapshot])
 
-  const onSurveyCellChange = useCallback(
+  const onSurveyCellChange1 = useCallback(
     (id: string, key: keyof Omit<MetersSurveyMeasureRow, "id">, value: string) => {
-      setSurveyRows((rows) => rows.map((r) => (r.id === id ? { ...r, [key]: value } : r)))
+      setSurveyRows1((rows) => rows.map((r) => (r.id === id ? { ...r, [key]: value } : r)))
     },
     [],
   )
 
-  const onAddSurveyRow = useCallback(() => {
-    setSurveyRows((rows) => [...rows, newSurveyRow()])
+  const onAddSurveyRow1 = useCallback(() => {
+    setSurveyRows1((rows) => [...rows, newSurveyRow()])
   }, [])
 
-  const onRemoveSurveyRow = useCallback((id: string) => {
-    setSurveyRows((rows) => (rows.length <= 1 ? rows : rows.filter((r) => r.id !== id)))
+  const onRemoveSurveyRow1 = useCallback((id: string) => {
+    setSurveyRows1((rows) => (rows.length <= 1 ? rows : rows.filter((r) => r.id !== id)))
+  }, [])
+
+  const onSurveyCellChange2 = useCallback(
+    (id: string, key: keyof Omit<MetersSurveyMeasureRow, "id">, value: string) => {
+      setSurveyRows2((rows) => rows.map((r) => (r.id === id ? { ...r, [key]: value } : r)))
+    },
+    [],
+  )
+
+  const onAddSurveyRow2 = useCallback(() => {
+    setSurveyRows2((rows) => [...rows, newSurveyRow()])
+  }, [])
+
+  const onRemoveSurveyRow2 = useCallback((id: string) => {
+    setSurveyRows2((rows) => (rows.length <= 1 ? rows : rows.filter((r) => r.id !== id)))
   }, [])
 
   const onPriceChange = useCallback((k: MetersSurveyPriceKey, v: string) => {
@@ -377,15 +394,19 @@ export function HasrAmtarCreatePage() {
                   <div ref={sheetMeasureRef} style={{ width: SHEET_WIDTH }}>
                     <MetersSurveySheet
                       logoSrcOverride={logoDataUrl ?? undefined}
-                      surveyRows={surveyRows}
+                      surveyRows1={surveyRows1}
+                      surveyRows2={surveyRows2}
                       prices={prices}
                       magnetMeters={magnetMeters}
                       clientName={clientName}
                       clientLocation={clientLocation}
                       paid={paid}
-                      onSurveyCellChange={onSurveyCellChange}
-                      onAddSurveyRow={onAddSurveyRow}
-                      onRemoveSurveyRow={onRemoveSurveyRow}
+                      onSurveyCellChange1={onSurveyCellChange1}
+                      onAddSurveyRow1={onAddSurveyRow1}
+                      onRemoveSurveyRow1={onRemoveSurveyRow1}
+                      onSurveyCellChange2={onSurveyCellChange2}
+                      onAddSurveyRow2={onAddSurveyRow2}
+                      onRemoveSurveyRow2={onRemoveSurveyRow2}
                       onPriceChange={onPriceChange}
                       onMagnetMeters={setMagnetMeters}
                       onPaid={setPaid}
@@ -400,42 +421,46 @@ export function HasrAmtarCreatePage() {
 
       {typeof document !== "undefined"
         ? createPortal(
-            <div
-              ref={exportRootRef}
-              className="pointer-events-none"
-              style={{
-                position: "fixed",
-                left: 0,
-                top: 0,
-                zIndex: -1000,
-                width: "max-content",
-                maxWidth: "none",
-                backgroundColor: "#ffffff",
-                border: "none",
-                outline: "none",
-                boxShadow: "none",
-                overflow: "visible",
-              }}
-              aria-hidden
-            >
-              <MetersSurveySheet
-                logoSrcOverride={logoDataUrl ?? undefined}
-                surveyRows={surveyRows}
-                prices={prices}
-                magnetMeters={magnetMeters}
-                clientName={clientName}
-                clientLocation={clientLocation}
-                paid={paid}
-                onSurveyCellChange={onSurveyCellChange}
-                onAddSurveyRow={onAddSurveyRow}
-                onRemoveSurveyRow={onRemoveSurveyRow}
-                onPriceChange={onPriceChange}
-                onMagnetMeters={setMagnetMeters}
-                onPaid={setPaid}
-              />
-            </div>,
-            document.body,
-          )
+          <div
+            ref={exportRootRef}
+            className="pointer-events-none"
+            style={{
+              position: "fixed",
+              left: 0,
+              top: 0,
+              zIndex: -1000,
+              width: "max-content",
+              maxWidth: "none",
+              backgroundColor: "#ffffff",
+              border: "none",
+              outline: "none",
+              boxShadow: "none",
+              overflow: "visible",
+            }}
+            aria-hidden
+          >
+            <MetersSurveySheet
+              logoSrcOverride={logoDataUrl ?? undefined}
+              surveyRows1={surveyRows1}
+              surveyRows2={surveyRows2}
+              prices={prices}
+              magnetMeters={magnetMeters}
+              clientName={clientName}
+              clientLocation={clientLocation}
+              paid={paid}
+              onSurveyCellChange1={onSurveyCellChange1}
+              onAddSurveyRow1={onAddSurveyRow1}
+              onRemoveSurveyRow1={onRemoveSurveyRow1}
+              onSurveyCellChange2={onSurveyCellChange2}
+              onAddSurveyRow2={onAddSurveyRow2}
+              onRemoveSurveyRow2={onRemoveSurveyRow2}
+              onPriceChange={onPriceChange}
+              onMagnetMeters={setMagnetMeters}
+              onPaid={setPaid}
+            />
+          </div>,
+          document.body,
+        )
         : null}
 
       <div
